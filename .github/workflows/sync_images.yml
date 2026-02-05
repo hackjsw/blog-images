@@ -1,0 +1,30 @@
+name: Auto Generate Image List
+on:
+  push:
+    paths:
+      - '**.jpg'
+      - '**.png'
+      - '**.webp'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Update Image List
+        run: |
+          echo "## 最新上传的照片" > IMAGE_LIST.md
+          # 遍历文件并生成 jsDelivr 链接
+          find . -type f \( -name "*.jpg" -o -name "*.png" -o -name "*.webp" \) | while read line; do
+            filename=$(basename "$line")
+            echo "![${filename}](https://cdn.jsdelivr.net/gh/${{ github.repository }}/${line#./})" >> IMAGE_LIST.md
+          done
+
+      - name: Commit changes
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git commit -am "Update image list [skip ci]" || exit 0
+          git push
